@@ -8,23 +8,21 @@ page = WebPage(chromium_options=co, session_or_options=so)
 #page = SessionPage()
 
 """
-# 获取 id 为 one 的元素
-div1 = page.ele('#one')
 # 获取 name 属性为 row1 的元素
 p1 = page.ele('@name=row1')
 # 获取包含“第二个div”文本的元素
 div2 = page.ele('第二个div')
 # 获取所有div元素
 div_list = page.eles('tag:div')
-# 获取到一个元素div1
+# 获取到一个元素div1,在div1内查找所有p元素
 div1 = page.ele('#one')
-# 在div1内查找所有p元素
 p_list = div1.eles('tag:p')
 #下载操作
 ele.click.to_download(rename=f'{datetime.date.today()}',)
 """
 
-def ntp_hik_DS2(ip:str, user:str, passwd:str, ntp:str='172.16.1.6'):
+# ntp设置
+def ntp_hik_DS2(ip:str, user:str='admin', passwd:str='', ntp:str='172.16.1.6'):
     try:
         page.get(f'http://{ip}/doc/page/config.asp')
         page.ele(locator='#username').input(user)
@@ -41,8 +39,12 @@ def ntp_hik_DS2(ip:str, user:str, passwd:str, ntp:str='172.16.1.6'):
         time.sleep(0.3)
     except:
         traceback.print_exc()
-        return False
+        if input('是否手动调整完成 输入1/0:\t') =='0':
+            return False
+        else:
+            return True
     return True
+
 # 设备型号 DS-2CD7A47HEWD-XZS
 def change_osd_hik_DS2(ip:str, user:str, passwd:str, osd3:str,osd4:str):
     try:

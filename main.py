@@ -20,15 +20,17 @@ if __name__ == '__main__':
             name = ws.cell(row=row, column=4).value   #设备名称
             osd = ws.cell(row=row, column=8).value  #OSD
             '''
-            ip = ws.cell(row=row, column=2).value   # Q列IP
+            ip = ws.cell(row=row, column=2).value   # B列IP
             osd4 = ws.cell(row=row, column=1).value  #OSD
             osd3 = ws.cell(row=row, column=3).value  #OSD
+            passwd = ws.cell(row=row, column=9).value  #OSD
             if ws.cell(row=row, column=4).value:
                 print(f"{ip}已完成,跳过")
                 continue
             #osd = re.sub(r'^\D*?(\d.*)',r'\1',osd2)
             print(osd3,osd4)
-            success = change_osd_hik_DS2(ip,'admin','CYpjy123...',osd3,osd4)
+            #success = change_osd_hik_DS2(ip,'admin','CYpjy123...',osd3,osd4)
+            success = ntp_hik_DS2(ip,passwd=passwd)
             input(f'success={success}按键继续.')
             ws.cell(row=row, column=4).value = success
             #print(ip,"错误计数：",fail_count)

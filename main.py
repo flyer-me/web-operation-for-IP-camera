@@ -1,6 +1,6 @@
 import traceback
 import openpyxl
-from ipc_hik import *
+from operations import *
 from pathlib import Path
 
 if __name__ == '__main__':

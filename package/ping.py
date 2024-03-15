@@ -16,23 +16,13 @@ def listdir(path):
     return [file.name for file in directory.iterdir() if file.is_file()]
 
 '''
-description: 
-param {*} filename
-param {*} header_row
-return {*} max_row
-'''
-def is_sheet_empty(sheet) ->int:
-    return sheet.max_row == 1 and sheet.max_column == 1
-
-
-'''
 description: 尝试从sheet的前n行中找到ip地址所在的列数
 param {*} filename
 param {*} sheet
 return {*} 列数，如果找不到则为-1
 '''
 def get_ip_row_in_sheet(sheet,n:int=10) ->int:
-    if is_sheet_empty(sheet):
+    if sheet.max_row == 1 and sheet.max_column == 1:
         return -1
     max_rows = min(n,sheet.max_row)
     for row in sheet.iter_rows(min_row=1,max_row=max_rows,min_col=1,max_col=sheet.max_column):
@@ -64,11 +54,10 @@ def read_xlsx(files=None):
             if col_num <= -1:
                 continue
             for row in sheet.iter_rows():
-                cell_value = row[col_num].value
+                cell_value = row[col_num - 1].value
                 if cell_value is not None:
                     try:
                         ip_address(cell_value)
-                        #if ip_address(cell_value).is_private == False:
                         data.append(cell_value)
                     except ValueError:
                         pass
@@ -98,7 +87,7 @@ def call_ping(tool_path, xfile, result, timeout = 2000, size = 64):
 
     with open(xfile, 'r') as file:
         count = sum(1 for line in file if line.strip())
-    print(f'超时IP数{count}.')
+    print(f'failed count:{count}.')
     process = None
     try:
         process = subprocess.Popen(command, shell=True)
@@ -139,22 +128,22 @@ param {*} file_list
 param {*} bad_ip
 return {*}
 '''
-def write_result(file_list, ip_file, is_in, not_in):
+def write_result(file_list, ip_file, is_in, not_in,result_col:int = -1):
     for fn in file_list:
         try:
             wb = load_workbook(fn)
         except PermissionError:
             print(f"{fn}文件被占用,无法读取.")
-            sys.exit(1)
-
+            return False
+        
         for sheet in wb.worksheets:
             col_num = get_ip_row_in_sheet(sheet)
             if col_num <= -1:
                 continue
-            # max_col = sheet.max_column
-            # new_col = max_col + 1  # 增加 “是否在线” 统计结果列
-            new_col = 3
-            sheet.cell(row=1, column=new_col).value = datetime.now().strftime("ping情况%m%d %H:%M")
+            if result_col == -1:
+                max_col = sheet.max_column
+                result_col = max_col + 1
+            sheet.cell(row=1, column=result_col).value = datetime.now().strftime("ping情况%m%d %H:%M")
 
             with open(ip_file, "r") as f:
                 ip_list = set(f.read().splitlines())
@@ -166,9 +155,9 @@ def write_result(file_list, ip_file, is_in, not_in):
                 except ValueError:
                     continue
                 if cell_value in ip_list:
-                    sheet.cell(row=row, column=new_col).value = is_in
+                    sheet.cell(row=row, column=result_col).value = is_in
                 else:
-                    sheet.cell(row=row, column=new_col).value = not_in
+                    sheet.cell(row=row, column=result_col).value = not_in
         wb.save(fn)
 
 '''
@@ -191,7 +180,7 @@ param {*} file_list
 param {*} enter 为True时，需要手动输入按键以结束.
 return {*}
 '''
-def ip_xlsx_test(file_list, ping_timeout, ping_size, times):
+def ip_xlsx_test(file_list, ping_timeout, ping_size, times,result_col=-1):
     ip_list_name = "ip.txt"
     result_name = "result.txt"
     bad_name = "bad.txt"
@@ -207,12 +196,13 @@ def ip_xlsx_test(file_list, ping_timeout, ping_size, times):
         get_bad_ip(result_name, bad_name)
 
         times = times - 1
-        print(f'less than{times}times ',end='')
+        print(f'{times}times ',end='')
     # 结果回写
-    write_result(file_list, bad_name, "超时", "已通")
+    write_result(file_list, bad_name, "超时", "已通",result_col)
     remove_txt()
 
-def test_ip(relative_path=''):
+
+def test_ip_in_xlsx(files,result_col=-1):
     print(Path.cwd())
     locale.setlocale(locale.LC_ALL, 'en_US.utf8')
     config = configparser.ConfigParser()
@@ -223,12 +213,15 @@ def test_ip(relative_path=''):
     ping_size = 64
 
     try:
-        file_list = [relative_path+f for f in listdir(relative_path) if f.endswith('.xlsx')]
-        ip_xlsx_test(file_list, ping_timeout, ping_size, ping_times)
+        ip_xlsx_test(files, ping_timeout, ping_size, ping_times,result_col)
     except Exception:
         traceback.print_exc()
-        input("发生异常，按任意键退出.")
+        print("发生异常,退出.")
         remove_txt()
+
+def test_ip(relative_path=".\数据文件\\"):
+    file_list = [relative_path + f for f in listdir(relative_path) if f.endswith('.xlsx')]
+    test_ip_in_xlsx(file_list)
 
 if __name__ == '__main__':
     test_ip(relative_path=".\数据文件\\")

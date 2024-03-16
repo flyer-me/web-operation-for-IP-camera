@@ -220,7 +220,7 @@ def test_ip_in_xlsx(files,result_col=-1):
         remove_txt()
 
 def test_ip(relative_path=".\数据文件\\"):
-    file_list = [relative_path + f for f in listdir(relative_path) if f.endswith('.xlsx')]
+    file_list = [relative_path + f for f in listdir(relative_path) if f.endswith('.xlsx') and '~' not in f]
     test_ip_in_xlsx(file_list)
 
 if __name__ == '__main__':

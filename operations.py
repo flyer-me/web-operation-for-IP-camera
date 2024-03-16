@@ -22,7 +22,8 @@ ele.click.to_download(rename=f'{datetime.date.today()}',)
 """
 
 # ntp设置
-def ntp_hik_DS2(ip:str, user:str='admin', passwd:str='', ntp:str='172.16.1.6'):
+def ntp_hik_DS2(ip:str, user:str='admin', passwd:str=''):
+    ntp:str='172.16.1.6'
     try:
         page.get(f'http://{ip}/doc/page/config.asp')
         page.ele(locator='#username').input(user)
@@ -32,13 +33,78 @@ def ntp_hik_DS2(ip:str, user:str='admin', passwd:str='', ntp:str='172.16.1.6'):
         page.ele(locator='时间配置').click()
         page.ele('#radioNTP').click()
         page.ele('@ng-model=oSettingTimeInfo.szNTPAddress').input(ntp)
-        page.ele('@ng-model=oSettingTimeInfo.szNTPInterval').input('120')
+        page.ele('@ng-model=oSettingTimeInfo.szNTPInterval').input(120)
         page.ele('保存').click()
-        page.ele('@ng-model=oSettingTimeInfo.szNTPInterval').input('60')
+        page.ele('@ng-model=oSettingTimeInfo.szNTPInterval').input(100)
+        try:
+            page.ele('@ng-bind=oLan.save').parent().click()
+        except:
+            pass
         page.ele('保存').click()
-        time.sleep(0.3)
+        page.refresh()
+        page.ele('时间配置').click()
+        input('确认完成?')
     except:
         traceback.print_exc()
+        if input('是否手动调整完成 输入1/0:\t') =='0':
+            return False
+        else:
+            return True
+    return True
+
+# 设备型号 DS-2CD7A47HEWD-XZS
+def change_ntp_hik_DS2(ip:str, user:str, passwd:str, time=1000):
+    try:
+        page.get(f'http://{ip}/doc/page/config.asp')
+        page.ele(locator='#username').input(user)
+        page.ele(locator='#password').input(passwd)
+        page.ele(locator='@type=button').click()
+        page.ele(locator='时间配置').click()
+        page.ele('@ng-model=oSettingTimeInfo.szNTPInterval').input(time)
+        page.ele('@class=btn btn-primary btn-save').click()
+        input('确定?')
+    except:
+        return False
+    return True
+
+def change_ntp_unv(ip:str, user:str='admin', passwd:str='12345678a_', time=3600):
+    try:
+        page.get(f'http://{ip}')
+        #page.ele(locator='#userName').input(user)
+        page.ele(locator='#password').input(passwd)
+        page.ele(locator='@type=button').click()
+        page.ele('配置').click()
+        page.ele('#Com_timeCfgLink').click()
+        page.ele('#SyncType').click()
+        page.ele('同步NTP服务器时间').click()
+        page.ele('#NTPIPAddr').input('172.16.1.6')
+        page.ele('#NTPSyncInterval').input(time)
+        page.ele('@class=submit_btn').click()
+        input('确定?')
+    except:
+        traceback.print_exc()
+        return False
+    return True
+
+def change_ntp_dahua(ip:str, user:str='admin', passwd:str='', time=1200):
+    print(ip,passwd)
+    try:
+        page.get(f'http://{ip}')
+        eles = page.eles('tag:input')
+        eles[0].input(user)
+        eles[1].input(passwd)
+        page.ele('@type=submit').click()
+        page.ele('@class=anticon myicon-set myicon ').click()
+        page.ele('系统管理').click()
+        page.ele('日期设置').click()
+        page.ele('@value=NTP').click()
+        page.ele('#normal_login_Server').input('172.16.1.6')
+        page.eles('@step=1')[1].input(time)
+        page.ele('手动更新').click()
+        page.ele('@class=ant-btn _submitButton ant-btn-primary').click()
+        time.sleep(1)
+        input('确定?')
+    except:
         if input('是否手动调整完成 输入1/0:\t') =='0':
             return False
         else:
@@ -91,10 +157,8 @@ def change_osd_hik_DS2(ip:str, user:str, passwd:str, osd3:str,osd4:str):
     return True
 
 if __name__ == '__main__':
-    ip = '172.16.x.x'
+    ip = '172.16.49.74'
     username = 'admin'
-    passwd = '...'
-    osd4 = "085311"
-    ntp = ''
-    success = ntp_hik_DS2(ip,username,passwd,ntp)
+    passwd = 'CYazl123...'
+    success = change_ntp_dahua(ip,username,passwd)
     print(success)

@@ -1,6 +1,6 @@
 import traceback
 import openpyxl
-from operations import *
+from package.ping import *
 from pathlib import Path
 
 if __name__ == '__main__':
@@ -8,10 +8,12 @@ if __name__ == '__main__':
     current_dir = Path.cwd()
     files = [file for file in current_dir.joinpath('./数据文件/').iterdir() if file.is_file()]
     xlsx_file = files[0]
+    #test_ip()
     try:
         wb = openpyxl.load_workbook(xlsx_file)
         ws = wb.active
-        for row in range(1, ws.max_row + 1):
+        from operations import *
+        for row in range(2, ws.max_row + 1):
             '''
             ip = ws.cell(row=row, column=17).value   # Q列IP
             user = ws.cell(row=row, column=18).value   #user
@@ -20,20 +22,15 @@ if __name__ == '__main__':
             name = ws.cell(row=row, column=4).value   #设备名称
             osd = ws.cell(row=row, column=8).value  #OSD
             '''
-            ip = ws.cell(row=row, column=2).value   # B列IP
-            osd4 = ws.cell(row=row, column=1).value  #OSD
-            osd3 = ws.cell(row=row, column=3).value  #OSD
-            passwd = ws.cell(row=row, column=9).value  #OSD
-            if ws.cell(row=row, column=4).value:
-                print(f"{ip}已完成,跳过")
+            
+            if ws.cell(row=row, column=10).value == "不通" or ws.cell(row=row, column=11).value:
                 continue
-            #osd = re.sub(r'^\D*?(\d.*)',r'\1',osd2)
-            print(osd3,osd4)
-            #success = change_osd_hik_DS2(ip,'admin','CYpjy123...',osd3,osd4)
-            success = ntp_hik_DS2(ip,passwd=passwd)
-            input(f'success={success}按键继续.')
-            ws.cell(row=row, column=4).value = success
-            #print(ip,"错误计数：",fail_count)
+            ip = ws.cell(row=row, column=1).value
+            passwd = ws.cell(row=row, column=5).value[:-1]+"..."
+            success = change_ntp_dahua(ip=ip,passwd=passwd)
+            #success = ntp_hik_DS2(ip,passwd=passwd)
+            ws.cell(row=row, column=11).value = success
+            print(f'{ip}:{success}')
             wb.save(xlsx_file)
         wb.save(xlsx_file)
         wb.close()

@@ -1,22 +1,15 @@
 from DrissionPage import ChromiumOptions, SessionOptions, WebPage
 import traceback
 import time
-co = ChromiumOptions(ini_path=r'.\config\web-config.ini')
-so = SessionOptions(ini_path=r'.\config\web-config.ini')
-page = WebPage(chromium_options=co, session_or_options=so)
+
+def init():
+    co = ChromiumOptions(ini_path=r'.\config\web-config.ini')
+    so = SessionOptions(ini_path=r'.\config\web-config.ini')
+    return WebPage(chromium_options=co, session_or_options=so)
 # 创建页面对象
 #page = SessionPage()
 
 """
-# 获取 name 属性为 row1 的元素
-p1 = page.ele('@name=row1')
-# 获取包含“第二个div”文本的元素
-div2 = page.ele('第二个div')
-# 获取所有div元素
-div_list = page.eles('tag:div')
-# 获取到一个元素div1,在div1内查找所有p元素
-div1 = page.ele('#one')
-p_list = div1.eles('tag:p')
 #下载操作
 ele.click.to_download(rename=f'{datetime.date.today()}',)
 """
@@ -24,6 +17,7 @@ ele.click.to_download(rename=f'{datetime.date.today()}',)
 # ntp设置
 def ntp_hik_DS2(ip:str, user:str='admin', passwd:str=''):
     ntp:str='172.16.1.6'
+    page = init()
     try:
         page.get(f'http://{ip}/doc/page/config.asp')
         page.ele(locator='#username').input(user)
@@ -54,6 +48,7 @@ def ntp_hik_DS2(ip:str, user:str='admin', passwd:str=''):
 
 # 设备型号 DS-2CD7A47HEWD-XZS
 def change_ntp_hik_DS2(ip:str, user:str, passwd:str, time=1000):
+    page = init()
     try:
         page.get(f'http://{ip}/doc/page/config.asp')
         page.ele(locator='#username').input(user)
@@ -68,6 +63,7 @@ def change_ntp_hik_DS2(ip:str, user:str, passwd:str, time=1000):
     return True
 
 def change_ntp_unv(ip:str, user:str='admin', passwd:str='12345678a_', time=3600):
+    page = init()
     try:
         page.get(f'http://{ip}')
         #page.ele(locator='#userName').input(user)
@@ -87,6 +83,7 @@ def change_ntp_unv(ip:str, user:str='admin', passwd:str='12345678a_', time=3600)
     return True
 
 def change_ntp_dahua(ip:str, user:str='admin', passwd:str='', time=1200):
+    page = init()
     print(ip,passwd)
     try:
         page.get(f'http://{ip}')
@@ -114,17 +111,13 @@ def change_ntp_dahua(ip:str, user:str='admin', passwd:str='', time=1200):
 # 设备型号 DS-2CD7A47HEWD-XZS
 def change_osd_hik_DS2(ip:str, user:str, passwd:str, osd3:str,osd4:str):
     try:
+        page = init()
         page.get(f'http://{ip}/doc/page/config.asp')
         page.ele(locator='#username').input(user)
         page.ele(locator='#password').input(passwd)
         page.ele(locator='@type=button').click()
         page.ele(locator='图像').click()
         page.ele(locator='OSD设置').click()
-        #selects = page.eles('tag:select')
-        #selects[7].click()
-        #page.ele('ng-model=oOsdParams.OSDSize').click()
-        #clicks = page.eles('tag:option')
-        #clicks[0].click()
         time.sleep(1)
         page.run_js_loaded("""document.querySelector('select[ng-model="oOsdParams.dateFormat"]').value = 0; """,timeout=3)
         time.sleep(1)
@@ -157,8 +150,8 @@ def change_osd_hik_DS2(ip:str, user:str, passwd:str, osd3:str,osd4:str):
     return True
 
 if __name__ == '__main__':
-    ip = '172.16.49.74'
+    ip = '172.16.1.1'
     username = 'admin'
-    passwd = 'CYazl123...'
+    passwd = '...'
     success = change_ntp_dahua(ip,username,passwd)
     print(success)

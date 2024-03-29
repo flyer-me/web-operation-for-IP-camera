@@ -12,7 +12,7 @@ if __name__ == '__main__':
     try:
         wb = openpyxl.load_workbook(xlsx_file)
         ws = wb.active
-        from package.operations import *
+        from package.ntp import *
         for row in range(2, ws.max_row + 1):
             '''
             ip = ws.cell(row=row, column=17).value   # Q列IP

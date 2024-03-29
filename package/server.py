@@ -13,9 +13,9 @@ def init():
 # 创建页面对象
 #page = SessionPage()
 
-ip = '172.16.19.1'
+ip = '172.16.1.1'
 username = 'admin'
-passwd = 'hik@2022'
+passwd = ''
 
 
 def get_devices(ip:str, user:str, passwd:str,count:int=0):

@@ -15,27 +15,36 @@ def listdir(path):
     directory = Path(path)
     return [file.name for file in directory.iterdir() if file.is_file()]
 
-'''
-description: 
-param {*} filename
-param {*} header_row
-return {*} max_row
-'''
-def is_sheet_empty(sheet) ->int:
+
+def is_sheet_empty(sheet) -> int:
+    """
+    Check if the given sheet is empty.
+
+    Args:
+        sheet: The sheet to check.
+
+    Returns:
+        int: 1 if the sheet is empty, 0 otherwise.
+    """
     return sheet.max_row == 1 and sheet.max_column == 1
 
 
-'''
-description: 尝试从sheet的前n行中找到ip地址所在的列数
-param {*} filename
-param {*} sheet
-return {*} 列数，如果找不到则为-1
-'''
-def get_ip_row_in_sheet(sheet,n:int=10) ->int:
+def get_ip_row_in_sheet(sheet, n: int = 10) -> int:
+    """
+    Returns the column number of the first cell containing a valid IP address in the given sheet.
+
+    Args:
+        sheet: The sheet object representing the Excel sheet.
+        n (optional): The maximum number of rows to check for IP addresses. Defaults to 10.
+
+    Returns:
+        The column number of the first cell containing a valid IP address, or -1 if no IP address is found.
+
+    """
     if is_sheet_empty(sheet):
         return -1
-    max_rows = min(n,sheet.max_row)
-    for row in sheet.iter_rows(min_row=1,max_row=max_rows,min_col=1,max_col=sheet.max_column):
+    max_rows = min(n, sheet.max_row)
+    for row in sheet.iter_rows(min_row=1, max_row=max_rows, min_col=1, max_col=sheet.max_column):
         for cell in row:
             try:
                 ip_address(cell.value)
@@ -45,12 +54,16 @@ def get_ip_row_in_sheet(sheet,n:int=10) ->int:
     return -1
 
 
-'''
-description: 
-param {*} files
-return {*}
-'''
 def read_xlsx(files=None):
+    """
+    Read IP addresses from Excel files.
+
+    Args:
+        files (list): List of file paths to Excel files.
+
+    Returns:
+        list: List of unique IP addresses extracted from the Excel files.
+    """
     data = []
     for fn in files:
         try:
@@ -82,14 +95,17 @@ def get_ip_list(xfile, result="ip.txt"):
         for item in data:
             f.write(f"{item}\n")
 
-'''
-description: 调用ping应用程序测试ip,并将结果写回result
-param {*} tool_path
-param {*} xfile
-param {*} result
-return {*}
-'''
-def call_ping(tool_path, xfile, result, timeout = 2000, size = 64):
+def call_ping(tool_path, xfile, result, timeout=2000, size=64):
+    """
+    Executes the ping command using the specified tool path and parameters.
+
+    Args:
+        tool_path (str): The path to the ping tool.
+        xfile (str): The path to the input file containing IP addresses.
+        result (str): The path to the output file to store the ping results.
+        timeout (int, optional): The timeout value for each ping request in milliseconds. Defaults to 2000.
+        size (int, optional): The size of the ping request packet in bytes. Defaults to 64.
+    """
     if not Path(result).exists():
         with open(result, 'w') as f:
             f.write('')
@@ -117,12 +133,7 @@ def get_encoding(file):
             data = f.read()
             return detect(data)['encoding']
 
-'''
-description: 
-param {*} ip_list
-param {*} bad_ip_list
-return {*}
-'''
+
 def get_bad_ip(ip_list, bad_ip_list):
     with open(ip_list, 'r', encoding=get_encoding(ip_list)) as f:
         lines = f.readlines()
@@ -133,13 +144,16 @@ def get_bad_ip(ip_list, bad_ip_list):
                 f.write(parts[0] + '\n')
 
 
-'''
-description: 
-param {*} file_list
-param {*} bad_ip
-return {*}
-'''
 def write_result(file_list, ip_file, is_in, not_in):
+    """
+    Writes the result of IP address comparison to the specified Excel files.
+
+    Args:
+        file_list (list): A list of file paths to Excel files.
+        ip_file (str): The path to the IP address file.
+        is_in (str): The value to be written in the result column if the IP address is found in the IP address file.
+        not_in (str): The value to be written in the result column if the IP address is not found in the IP address file.
+    """
     for fn in file_list:
         try:
             wb = load_workbook(fn)
@@ -171,10 +185,7 @@ def write_result(file_list, ip_file, is_in, not_in):
                     sheet.cell(row=row, column=new_col).value = not_in
         wb.save(fn)
 
-'''
-description: 删除本目录下file_ext后缀名的文件
-param {*} file_ext 后缀名
-'''
+
 def remove_txt(file_ext:str = '.txt'):
     file_path = Path.cwd()
     file_ext = '.txt'
@@ -184,14 +195,19 @@ def remove_txt(file_ext:str = '.txt'):
             if path_list.suffix == file_ext:
                 path_list.unlink()
 
-
-'''
-description: 对XLSX文件列表,执行IP连通性测试,并回写结果
-param {*} file_list
-param {*} enter 为True时，需要手动输入按键以结束.
-return {*}
-'''
 def ip_xlsx_test(file_list, ping_timeout, ping_size, times):
+    """
+    Perform IP testing using ping and write the results to files.
+
+    Args:
+        file_list (list): List of files to process.
+        ping_timeout (int): Timeout value for ping in milliseconds.
+        ping_size (int): Size of the ping packet in bytes.
+        times (int): Number of times to repeat the ping operation.
+
+    Returns:
+        None
+    """
     ip_list_name = "ip.txt"
     result_name = "result.txt"
     bad_name = "bad.txt"
@@ -213,10 +229,19 @@ def ip_xlsx_test(file_list, ping_timeout, ping_size, times):
     remove_txt()
 
 def test_ip(relative_path=''):
+    """
+    Test IP addresses by pinging them and perform operations on IP-related Excel files.
+
+    Args:
+        relative_path (str): The relative path to the directory containing the IP-related Excel files.
+
+    Returns:
+        bool: True if the operation is successful, False otherwise.
+    """
     print(Path.cwd())
     locale.setlocale(locale.LC_ALL, 'en_US.utf8')
     config = configparser.ConfigParser()
-    config.read('config/ping.ini',encoding="utf-8-sig")
+    config.read('config/ping.ini', encoding="utf-8-sig")
 
     ping_timeout = config.getint('cfg', 'ping_timeout', fallback=2000)    #ping超时时间
     ping_times = config.getint('cfg', 'ping_times', fallback=10)        #ping尝试次数
@@ -229,6 +254,8 @@ def test_ip(relative_path=''):
         traceback.print_exc()
         input("发生异常，按任意键退出.")
         remove_txt()
+        return False
+    return True
 
 if __name__ == '__main__':
     test_ip(relative_path=".\数据文件\\")

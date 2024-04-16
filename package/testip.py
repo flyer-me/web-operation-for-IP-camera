@@ -248,11 +248,11 @@ def test_ip(relative_path=''):
     ping_size = 64
 
     try:
-        file_list = [relative_path+f for f in listdir(relative_path) if f.endswith('.xlsx')]
+        file_list = [relative_path + f for f in listdir(relative_path) if f.endswith('.xlsx') and '~' not in f]
         ip_xlsx_test(file_list, ping_timeout, ping_size, ping_times)
     except Exception:
         traceback.print_exc()
-        input("发生异常，按任意键退出.")
+        print("testip发生异常.")
         remove_txt()
         return False
     return True

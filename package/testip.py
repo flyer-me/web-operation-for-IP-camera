@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 from datetime import datetime
-from ipaddress import ip_address
+import IPy
 from pathlib import Path
 from chardet import detect
 from openpyxl import load_workbook
@@ -10,8 +10,13 @@ import traceback
 import subprocess
 import locale
 
+"""
+This is DEMO code. Do not use it in released project.
+flyer-me 2024/04/15.
+"""
 
-def listdir(path):
+
+def listdir(path=''):
     directory = Path(path)
     return [file.name for file in directory.iterdir() if file.is_file()]
 
@@ -38,7 +43,7 @@ def get_ip_row_in_sheet(sheet, n: int = 10) -> int:
         n (optional): The maximum number of rows to check for IP addresses. Defaults to 10.
 
     Returns:
-        The column number of the first cell containing a valid IP address, or -1 if no IP address is found.
+        The column number of the first cell containing a valid IP address start from 1, or -1 if no IP address is found.
 
     """
     if is_sheet_empty(sheet):
@@ -47,9 +52,11 @@ def get_ip_row_in_sheet(sheet, n: int = 10) -> int:
     for row in sheet.iter_rows(min_row=1, max_row=max_rows, min_col=1, max_col=sheet.max_column):
         for cell in row:
             try:
-                ip_address(cell.value)
-                return cell.column
-            except ValueError:
+                if '.' in cell.value:
+                    ip_version = IPy.IP(cell.value).version()
+                    if ip_version == 4 or ip_version == 6:
+                        return cell.column
+            except Exception as e:
                 pass
     return -1
 
@@ -74,14 +81,13 @@ def read_xlsx(files=None):
 
         for sheet in wb.worksheets:
             col_num = get_ip_row_in_sheet(sheet)
+            #print(f'IP地址位于{col_num}列')
             if col_num <= -1:
                 continue
             for row in sheet.iter_rows():
-                cell_value = row[col_num].value
+                cell_value = row[col_num - 1].value
                 if cell_value is not None:
                     try:
-                        ip_address(cell_value)
-                        #if ip_address(cell_value).is_private == False:
                         data.append(cell_value)
                     except ValueError:
                         pass
@@ -114,7 +120,8 @@ def call_ping(tool_path, xfile, result, timeout=2000, size=64):
 
     with open(xfile, 'r') as file:
         count = sum(1 for line in file if line.strip())
-    print(f'超时IP数{count}.')
+    print(f'{count}IP超时.',end='\r')
+    sys.stdout.flush()
     process = None
     try:
         process = subprocess.Popen(command, shell=True)
@@ -122,10 +129,12 @@ def call_ping(tool_path, xfile, result, timeout=2000, size=64):
     except:
         print("ping调用失败.")
         traceback.print_exc()
+        return False
     finally:
         if process is not None and process.poll() is None:
             process.terminate()
             process.wait()
+    return True
 
 def get_encoding(file):
     if Path(file).exists():
@@ -144,7 +153,7 @@ def get_bad_ip(ip_list, bad_ip_list):
                 f.write(parts[0] + '\n')
 
 
-def write_result(file_list, ip_file, is_in, not_in):
+def write_result(file_list, ip_file, is_in, not_in,writeLine=-1):
     """
     Writes the result of IP address comparison to the specified Excel files.
 
@@ -165,24 +174,22 @@ def write_result(file_list, ip_file, is_in, not_in):
             col_num = get_ip_row_in_sheet(sheet)
             if col_num <= -1:
                 continue
-            # max_col = sheet.max_column
-            # new_col = max_col + 1  # 增加 “是否在线” 统计结果列
-            new_col = 3
-            sheet.cell(row=1, column=new_col).value = datetime.now().strftime("ping情况%m%d %H:%M")
+            max_col = sheet.max_column
+
+            if writeLine == -1:
+                writeLine = max_col + 1
+            sheet.cell(row=1, column=writeLine).value = datetime.now().strftime("在线情况%m%d %H:%M")
 
             with open(ip_file, "r") as f:
                 ip_list = set(f.read().splitlines())
 
             for row in range(2, sheet.max_row + 1):
-                cell_value = sheet.cell(row=row, column=col_num + 1).value  # sheet.cell 的 column 是从1开始
-                try:
-                    ip_address(cell_value)
-                except ValueError:
-                    continue
+                cell_value = sheet.cell(row=row, column=col_num).value  # sheet.cell 的 column 是从1开始
+
                 if cell_value in ip_list:
-                    sheet.cell(row=row, column=new_col).value = is_in
+                    sheet.cell(row=row, column=writeLine).value = is_in
                 else:
-                    sheet.cell(row=row, column=new_col).value = not_in
+                    sheet.cell(row=row, column=writeLine).value = not_in
         wb.save(fn)
 
 
@@ -195,7 +202,7 @@ def remove_txt(file_ext:str = '.txt'):
             if path_list.suffix == file_ext:
                 path_list.unlink()
 
-def ip_xlsx_test(file_list, ping_timeout, ping_size, times):
+def ip_xlsx_test(file_list, ping_timeout, ping_size, times, writeLine):
     """
     Perform IP testing using ping and write the results to files.
 
@@ -217,44 +224,49 @@ def ip_xlsx_test(file_list, ping_timeout, ping_size, times):
     with open(ip_list_name, 'r') as file1, open(bad_name, 'w') as file2:
         file2.write(file1.read())
     # ping重复操作
-    print(f'ping:timeout{ping_timeout}ms,{ping_size}bytes.')
-    while(times > 0):
-        call_ping(ping_relative_path, bad_name, result_name, ping_timeout, ping_size)
-        get_bad_ip(result_name, bad_name)
-
-        times = times - 1
-        print(f'less than{times}times ',end='')
+    print(f'Ping Timeout={ping_timeout}ms {ping_size}Bytes.')
+    
+    try:
+        while(times > 0):
+            call_ping(ping_relative_path, bad_name, result_name, ping_timeout, ping_size)
+            get_bad_ip(result_name, bad_name)
+            times = times - 1
+            print(f'{times}times left  ',end='')
+    except KeyboardInterrupt:
+        print("通过按键中断立即结束了ping操作")
+    
     # 结果回写
-    write_result(file_list, bad_name, "超时", "已通")
-    remove_txt()
+    write_result(file_list, bad_name, "离线", "在线", writeLine)
+    #remove_txt()
 
 def test_ip(relative_path=''):
     """
-    Test IP addresses by pinging them and perform operations on IP-related Excel files.
+    使用ping检测IP地址并将结果写回相关文件.
 
     Args:
-        relative_path (str): The relative path to the directory containing the IP-related Excel files.
+        relative_path (str): 包含需要检测的IP地址xlsx文件的相对路径.
 
     Returns:
         bool: True if the operation is successful, False otherwise.
     """
-    print(Path.cwd())
     locale.setlocale(locale.LC_ALL, 'en_US.utf8')
     config = configparser.ConfigParser()
     config.read('config/ping.ini', encoding="utf-8-sig")
 
     ping_timeout = config.getint('cfg', 'ping_timeout', fallback=2000)    #ping超时时间
     ping_times = config.getint('cfg', 'ping_times', fallback=10)        #ping尝试次数
-    ping_size = 64
+    writeLine = config.getint('cfg', 'writeLine', fallback=-1)        #结果写回在xlsx的第几列
+    ping_size = 32
 
     try:
         file_list = [relative_path + f for f in listdir(relative_path) if f.endswith('.xlsx') and '~' not in f]
-        ip_xlsx_test(file_list, ping_timeout, ping_size, ping_times)
+        ip_xlsx_test(file_list, ping_timeout, ping_size, ping_times, writeLine)
     except Exception:
         traceback.print_exc()
         print("testip发生异常.")
-        remove_txt()
         return False
+    finally:
+        remove_txt()
     return True
 
 if __name__ == '__main__':

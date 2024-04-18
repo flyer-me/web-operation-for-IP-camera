@@ -1,4 +1,4 @@
-from package.driver import By, Keys, _click, _get_attribute_of_element, init
+from package.de_driver import By, Keys, _click, _get_attribute_of_element, init
 import re
 import time
 import traceback

@@ -1,11 +1,12 @@
-from DrissionPage import ChromiumOptions, SessionOptions, WebPage
 import traceback
 import time
 
 def init():
-    co = ChromiumOptions(ini_path=r'.\config\web-config.ini')
-    so = SessionOptions(ini_path=r'.\config\web-config.ini')
-    return WebPage(chromium_options=co, session_or_options=so)
+    from DrissionPage import ChromiumOptions,ChromiumPage
+    co = ChromiumOptions().set_local_port(9222)
+    co = co.ignore_certificate_errors()
+    page = ChromiumPage(addr_or_opts=co,timeout=5)
+    return page
 # 创建页面对象
 #page = SessionPage()
 
@@ -47,7 +48,7 @@ def ntp_hik_DS2(ip:str, user:str='admin', passwd:str=''):
     return True
 
 # 设备型号 DS-2CD7A47HEWD-XZS
-def change_ntp_hik_DS2(ip:str, user:str, passwd:str, time=1000):
+def ntp_hik_DS2(ip:str, user:str, passwd:str, time=1000):
     page = init()
     try:
         page.get(f'http://{ip}/doc/page/config.asp')
@@ -62,27 +63,36 @@ def change_ntp_hik_DS2(ip:str, user:str, passwd:str, time=1000):
         return False
     return True
 
-def change_ntp_unv(ip:str, user:str='admin', passwd:str='12345678a_', time=3600):
+def ntp_Unv(inputs):
     page = init()
     try:
-        page.get(f'http://{ip}')
-        #page.ele(locator='#userName').input(user)
-        page.ele(locator='#password').input(passwd)
-        page.ele(locator='@type=button').click()
-        page.ele('配置').click()
-        page.ele('#Com_timeCfgLink').click()
-        page.ele('#SyncType').click()
-        page.ele('同步NTP服务器时间').click()
-        page.ele('#NTPIPAddr').input('172.16.1.6')
-        page.ele('#NTPSyncInterval').input(time)
-        page.ele('@class=submit_btn').click()
-        input('确定?')
+        page.ele("#password").input(inputs['密码'])
+        page.ele("@class=login-button").click()
+        page._wait_loaded(10)
+        page.ele("配置").click('js')
+        page._wait_loaded()
+
+        if len(page.eles("#Com_timeCfgLink",timeout=0.6)) > 0:
+            page.ele("#Com_timeCfgLink").click()
+        else:
+            page.ele("#systemCfgLink").click()
+            page.ele("#timeCfgTab").click()
+
+        page._wait_loaded()
+        if page.ele("#SyncType").attr('defaultvalue') not in "3":
+            page.ele("#SyncType").click()
+            page.eles("同步NTP服务器时间")[-1].click()
+        page.ele("#NTPIPAddr").input(inputs['NTP'])
+        page.ele("#NTPSyncInterval").input(inputs['NTP间隔'])
+        page.ele("@class=submit_btn").click()
+        import time
+        time.sleep(1)
     except:
         traceback.print_exc()
         return False
     return True
 
-def change_ntp_dahua(ip:str, user:str='admin', passwd:str='', time=1200):
+def ntp_dahua(ip:str, user:str='admin', passwd:str='', time=1200):
     page = init()
     print(ip,passwd)
     try:
@@ -112,5 +122,5 @@ if __name__ == '__main__':
     ip = '172.16.1.1'
     username = 'admin'
     passwd = '...'
-    success = change_ntp_dahua(ip,username,passwd)
+    success = ntp_dahua(ip,username,passwd)
     print(success)

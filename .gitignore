@@ -1,5 +1,6 @@
 数据文件
 *.txt
+!info.txt
 *.xls
 *.xlsx
 *.pyc

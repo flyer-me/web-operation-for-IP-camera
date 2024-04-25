@@ -23,7 +23,6 @@ def main():
                         inputs[ws.cell(row=1, column=col).value] = ws.cell(row=row, column=col).value
                     print(inputs['IP地址']+",",end='')
                     result = call_run(inputs)
-                    #input("enter确认继续")
                     print(result)
                     ws.cell(row=row, column=10).value = result
                     wb.save(xlsx_file)

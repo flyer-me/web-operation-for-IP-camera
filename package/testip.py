@@ -193,14 +193,10 @@ def write_result(file_list, ip_file, is_in, not_in,writeLine=-1):
         wb.save(fn)
 
 
-def remove_txt(file_ext:str = '.txt'):
-    file_path = Path.cwd()
-    file_ext = '.txt'
-    for path in listdir(file_path):
-        path_list = Path(file_path).joinpath(Path(path))
-        if path_list.is_file():
-            if path_list.suffix == file_ext:
-                path_list.unlink()
+def removeFile(fileList):
+    for file in fileList:
+        if Path(file).exists():
+            Path(file).unlink()
 
 def ip_xlsx_test(file_list, ping_timeout, ping_size, times, writeLine):
     """
@@ -218,6 +214,7 @@ def ip_xlsx_test(file_list, ping_timeout, ping_size, times, writeLine):
     ip_list_name = "ip.txt"
     result_name = "result.txt"
     bad_name = "bad.txt"
+    tempFileList = [Path.cwd().joinpath(ip_list_name), Path.cwd().joinpath(result_name), Path.cwd().joinpath(bad_name)]
     ping_relative_path = r'tools\PingInfoView.exe'
     get_ip_list(file_list, ip_list_name)
     # 未测试时bad ip为全部ip
@@ -237,7 +234,7 @@ def ip_xlsx_test(file_list, ping_timeout, ping_size, times, writeLine):
     
     # 结果回写
     write_result(file_list, bad_name, "离线", "在线", writeLine)
-    #remove_txt()
+    return tempFileList
 
 def test_ip(relative_path=''):
     """
@@ -260,15 +257,20 @@ def test_ip(relative_path=''):
 
     try:
         file_list = [relative_path + f for f in listdir(relative_path) if f.endswith('.xlsx') and '~' not in f]
-        ip_xlsx_test(file_list, ping_timeout, ping_size, ping_times, writeLine)
+        tempFileList = ip_xlsx_test(file_list, ping_timeout, ping_size, ping_times, writeLine)
     except Exception:
         traceback.print_exc()
         print("testip发生异常.")
         return False
     finally:
-        remove_txt()
+        removeFile(tempFileList)
     return True
 
 if __name__ == '__main__':
-    test_ip(relative_path=".\数据文件\\")
+    #test_ip(relative_path=".\数据文件\\")
+    ip_list_name = "ip.txt"
+    result_name = "result.txt"
+    bad_name = "bad.txt"
+    tempFileList = [ip_list_name, result_name, bad_name]
+    removeFile(tempFileList)
     sys.exit(0)

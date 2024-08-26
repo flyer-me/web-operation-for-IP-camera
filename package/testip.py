@@ -267,10 +267,8 @@ def test_ip(relative_path=''):
     return True
 
 if __name__ == '__main__':
-    #test_ip(relative_path=".\数据文件\\")
-    ip_list_name = "ip.txt"
-    result_name = "result.txt"
-    bad_name = "bad.txt"
-    tempFileList = [ip_list_name, result_name, bad_name]
-    removeFile(tempFileList)
+    test_ip(relative_path=".\数据文件\\")
+    
+    removeFile(["ip.txt", "result.txt", "bad.txt"])
+    
     sys.exit(0)

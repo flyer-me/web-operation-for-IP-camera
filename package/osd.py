@@ -34,14 +34,6 @@ def get_type_hw_r(driver):
     _click(driver,"//*[text()='音视图']")
     _click(driver,"//*[text()='OSD参数']")
     osd = ""
-    '''if _get_attribute(driver,"osd_item_content_id0").find("北京") !=-1:
-        osd = _get_attribute(driver,"osd_item_content_id0")
-    elif _get_attribute(driver,"osd_item_content_id1").find("北京") !=-1:
-        osd = _get_attribute(driver,"osd_item_content_id1")
-    elif _get_attribute(driver,"osd_item_content_id2").find("北京") !=-1:
-        osd = _get_attribute(driver,"osd_item_content_id2")
-    elif _get_attribute(driver,"osd_item_content_id3").find("北京") !=-1:
-        osd = _get_attribute(driver,"osd_item_content_id3")'''
     element = driver.find_element(By.XPATH,"//div[contains(text(),'人')]")
     osd = _get_attribute_of_element(element)
     return osd
@@ -225,7 +217,6 @@ if __name__ == '__main__':
                 traceback.print_exc()
                 fail_count = -1
                 ws.cell(row=row, column=9).value = fail_count #F列
-            #print(ip,"错误计数：",fail_count)
             wb.save(xlsx_file)
         wb.save(xlsx_file)
         wb.close()

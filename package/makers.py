@@ -20,13 +20,11 @@ def get_html(ip:str) ->str:
     page._wait_loaded(1)
     return page.html
 
-def get_maker(html:str)->str:
+def get_maker(html:str) ->str:
     for key in keyAttr_makers.keys():
         if key in html:
             return keyAttr_makers[key]
-    return "未知"
-
-
+    return "Unknown"
 
 if __name__ == '__main__':
     ip = '172.16.41.12'
